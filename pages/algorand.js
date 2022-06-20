@@ -7,8 +7,8 @@ import { ALGO_MyAlgoConnect as MyAlgoConnect } from '@reach-sh/stdlib';
 import * as backendERC from '../reachBackend/erc20b.main.js';
 import * as backendDB from '../reachBackend/indexDB3.main.js'
 //import * as backendST from '../../reachBackend/indexST.main.js'
-import * as backendCtc from '../reachBackend/indexCtcALGO4.main.js'
-//import * as backendCtc from 'https://raw.githubusercontent.com/cooperativ-labs/share-manager-contract-algorand/main/index.main.js'
+//import * as backendCtc from '../reachBackend/indexCtcALGO4.main.js'
+import * as backendCtc from 'https://raw.githubusercontent.com/cooperativ-labs/share-manager-contract-algorand/main/index.main.js'
 import React from "react";
 import { useState, useRef, useEffect } from "react";
 
@@ -35,13 +35,11 @@ export default function Algorand() {
     const stcId = useRef('');
     const centralCtc = useRef('');
 
-    useEffect(async () => {
-        //event.preventDefault();
+    const inUseEffect = async () => {
         const reach = loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
         reach.setWalletFallback(reach.walletFallback({
             providerEnv: 'TestNet', MyAlgoConnect
         }));
-        unsafeAllowMultipleStdlibs()
         const acc = await reach.getDefaultAccount()
         setAddress(acc.getAddress());
         const addr = acc.getAddress();
@@ -67,6 +65,13 @@ export default function Algorand() {
             console.log(`Creator already deployed Central Manager contract: `, cenCtc[1].substring(0, 10));
         }
 
+    }
+
+    useEffect(() => {
+        inUseEffect();
+        /*  return () => {
+             console.log('I must return something');
+         }; */
 
     }, [/* btDeploy, stDeploy, ctcDeploy */]);
 
