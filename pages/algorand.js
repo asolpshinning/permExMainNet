@@ -4,11 +4,10 @@ import Link from 'next/link'
 import styles from '../styles/Home.module.css'
 import loadStdlib from "@reach-sh/stdlib";
 import { ALGO_MyAlgoConnect as MyAlgoConnect } from '@reach-sh/stdlib';
-import { unsafeAllowMultipleStdlibs } from "@reach-sh/stdlib";
-import * as backendERC from '../../reachBackend/erc20b.main.js';
-import * as backendDB from '../../reachBackend/indexDB3.main.js'
-import * as backendST from '../../reachBackend/indexST.main.js'
-import * as backendCtc from '../../reachBackend/indexCtcALGO4.main.js'
+import * as backendERC from '../reachBackend/erc20b.main.js';
+import * as backendDB from '../reachBackend/indexDB3.main.js'
+//import * as backendST from '../../reachBackend/indexST.main.js'
+import * as backendCtc from '../reachBackend/indexCtcALGO4.main.js'
 //import * as backendCtc from 'https://raw.githubusercontent.com/cooperativ-labs/share-manager-contract-algorand/main/index.main.js'
 import React from "react";
 import { useState, useRef, useEffect } from "react";
