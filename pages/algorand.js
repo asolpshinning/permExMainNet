@@ -3,21 +3,44 @@ import Head from 'next/head'
 import Link from 'next/link'
 import styles from '../styles/Home.module.css'
 import loadStdlib from "@reach-sh/stdlib";
+
 import { ALGO_MyAlgoConnect as MyAlgoConnect } from '@reach-sh/stdlib';
 import * as backendERC from '../reachBackend/erc20b.main.js';
 import * as backendDB from '../reachBackend/indexDB3.main.js'
 //import * as backendST from '../../reachBackend/indexST.main.js'
 //import * as backendCtc from '../reachBackend/indexCtcALGO4.main.js'
-import * as backendCtc from 'https://raw.githubusercontent.com/cooperativ-labs/share-manager-contract-algorand/main/index.main.js'
 import React from "react";
 import { useState, useRef, useEffect } from "react";
 
+import * as backendCtc from 'https://raw.githubusercontent.com/cooperativ-labs/share-manager-contract-algorand/main/index.main.js'
 
-//  91151742 = usdc id = stored in db  #acc 2
-//  91162279 = share token = stored in db #acc 5
-//   = central manager ctc = stored in db #acc 5
+//firebase
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import { getFirestore, collection, getDocs } from 'firebase/firestore/lite';
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDzaVjpctK_rmE9pB3st-XqIzS_So2Dt08",
+  authDomain: "permex-4686b.firebaseapp.com",
+  projectId: "permex-4686b",
+  storageBucket: "permex-4686b.appspot.com",
+  messagingSenderId: "968219389558",
+  appId: "1:968219389558:web:3ddc53857343a6592af957",
+  measurementId: "G-QHY2RPY529"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+//
+
 
 export default function Algorand() {
+    let addre;
     const dbCtcId = '91149871' //Algorand deployed DB test1 //'91227394' DB 2//
     const [address, setAddress] = useState("Connect Your Wallet. Click 'connect'");
     const [balance, setBalance] = useState(0);
@@ -26,7 +49,6 @@ export default function Algorand() {
     //const [lock, setLock] = useState(`Sales unlocked. Approved investors are free to trade`);
     const [tokenData, setTokenData] = useState(
         <div>
-
         </div>)
     const btDeployed = useRef(false);
     const stDeployed = useRef(false);
@@ -40,7 +62,8 @@ export default function Algorand() {
         reach.setWalletFallback(reach.walletFallback({
             providerEnv: 'TestNet', MyAlgoConnect
         }));
-        const acc = await reach.getDefaultAccount()
+        const acc = await reach.getDefaultAccount();
+        addre= acc.getAddress();
         setAddress(acc.getAddress());
         const addr = acc.getAddress();
         setBalance(reach.formatCurrency((await reach.balanceOf(acc))), 4);
@@ -64,7 +87,25 @@ export default function Algorand() {
             ctcDeployed.current = true;
             console.log(`Creator already deployed Central Manager contract: `, cenCtc[1].substring(0, 10));
         }
+        connectAPI();
+    }
+    const db = getFirestore(app);
+    async function getDistributions(db) {
+        const distr = collection(db,'distributions');
+        const distrSnapshot = await getDocs(distr);
+        const distrList = distrSnapshot.docs.map(doc => doc.data());
+        console.log(distrList)
+        return distrList;
+    }
 
+    const connectAPI = async() => {
+        const res = await fetch('api/hello',{
+            method : 'POST',
+            body: JSON.stringify({'address' : addre}),
+            headers: {'Content-Type' : 'application/json'},
+        })
+        const data = await res.json();
+        console.log(data);
     }
 
     useEffect(() => {
@@ -72,14 +113,14 @@ export default function Algorand() {
         /*  return () => {
              console.log('I must return something');
          }; */
-
+        getDistributions(db);
     }, [/* btDeploy, stDeploy, ctcDeploy */]);
 
     //useful function for reading user-entered values from input boxes
     const getElement = (className) => {
         let theElement = document.getElementsByClassName(className)[0];
-        console.log(theElement.value)
-        return theElement.value
+        console.log(theElement.value);
+        return theElement.value;
     }
     //
     //useful function for storing ctcId's to decentralized database
