@@ -101,7 +101,7 @@ export default function Algorand() {
     const connectAPI = async() => {
         const res = await fetch('api/hello',{
             method : 'POST',
-            body: JSON.stringify({'address' : addre}),
+            body: JSON.stringify({'address' : addre, 'amount': 0, 'number': 1}),
             headers: {'Content-Type' : 'application/json'},
         })
         const data = await res.json();
@@ -113,7 +113,7 @@ export default function Algorand() {
         /*  return () => {
              console.log('I must return something');
          }; */
-        getDistributions(db);
+        //getDistributions(db);
     }, [/* btDeploy, stDeploy, ctcDeploy */]);
 
     //useful function for reading user-entered values from input boxes
