@@ -8,11 +8,11 @@ import { ALGO_MyAlgoConnect as MyAlgoConnect } from '@reach-sh/stdlib';
 import * as backendERC from '../reachBackend/erc20b.main.js';
 import * as backendDB from '../reachBackend/indexDB3.main.js'
 //import * as backendST from '../../reachBackend/indexST.main.js'
-//import * as backendCtc from '../reachBackend/indexCtcALGO4.main.js'
+import * as backendCtc from '../reachBackend/indexCtcALGO4.main.js'
 import React from "react";
 import { useState, useRef, useEffect } from "react";
 
-import * as backendCtc from 'https://raw.githubusercontent.com/cooperativ-labs/share-manager-contract-algorand/main/index.main.js'
+//import * as backendCtc from 'https://raw.githubusercontent.com/cooperativ-labs/share-manager-contract-algorand/main/index.main.js'
 
 //firebase
 // Import the functions you need from the SDKs you need
@@ -41,7 +41,7 @@ const app = initializeApp(firebaseConfig);
 
 export default function Algorand() {
     let addre;
-    const dbCtcId = '91149871' //Algorand deployed DB test1 //'91227394' DB 2//
+    const dbCtcId = '98547130'//'91149871' //Algorand deployed DB test1 //'91227394' DB 2//
     const [address, setAddress] = useState("Connect Your Wallet. Click 'connect'");
     const [balance, setBalance] = useState(0);
     const [btDeploy, setBtDeploy] = useState(['DEPLOY', `USDC or Equivalent`, 'USDC/BT']);
@@ -87,7 +87,7 @@ export default function Algorand() {
             ctcDeployed.current = true;
             console.log(`Creator already deployed Central Manager contract: `, cenCtc[1].substring(0, 10));
         }
-        connectAPI();
+        //connectAPI();
     }
     const db = getFirestore(app);
     async function getDistributions(db) {
@@ -253,20 +253,23 @@ export default function Algorand() {
         console.log(`...backend now connected`);
         await Promise.all([
             backendCtc.Creator(ctcCreator, {
-                getParams: () => {
+                getParams: (msg) => {
                     console.log(`${stdlib.formatAddress(accCreator)} about to set five parameters of Manager Contract`);
+                    ctcCreator.getInfo().then((id) => {
+                        console.log(`this is contract id: ${id} and ${msg}`);
+                        //API for storing contract ID into database
+                        dbApi(id._hex, "manCtcId");
+                        ctcCreator.getContractAddress().then((address) =>
+                        console.log(`this is contract id: ${address} I am giving you after deploying`))
+                    }
+                    ) 
+                    
+                    
                     return {
                         companyName: getElement("manCtcName"), bT: { "type": "BigNumber", "hex": getElement("btID") },
                         lockSale: false, managerAddr: accCreator.getAddress(), authorizedST: 1000
                     }
 
-                },
-                iDeployed: async (msg) => {
-                    console.log(msg);
-                    const deployedCtc = await ctcCreator.getInfo();
-                    console.log(deployedCtc);
-                    //API for storing contract ID into database
-                    dbApi(deployedCtc._hex, "manCtcId");
                 },
             })])
     }
@@ -302,17 +305,24 @@ export default function Algorand() {
         });
     }
     //Deploy DB
-    const deployDB = async () => {
+    const deployDB = async() => {
         const reach = loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
         const stdlib = reach;
         reach.setWalletFallback(reach.walletFallback({ providerEnv: 'TestNet', MyAlgoConnect }));
         const accCreator = await stdlib.getDefaultAccount();
-        const ctcCreator = accCreator.contract(backendDB);
+        const ctcCreator = await accCreator.contract(backendDB);
         console.log(`...backendDB now connected`);
         await Promise.all([
             backendDB.Creator(ctcCreator, {
-                getParams: () => {
+                getParams: async (msg) => {
                     console.log(`${stdlib.formatAddress(accCreator)} about to set one parameter of dbCtc`);
+                    ctcCreator.getInfo().then((id) =>
+                        console.log(`this is contract id: ${id} and ${msg}`)  
+                    ) //98547130
+                    ctcCreator.getContractAddress().then((address) =>
+                        console.log(`this is contract id: ${address} I am giving you after deploying`))
+                    
+                    //console.log(await ctcCreator.getContractAddress())
                     return {
                         zeroAddress: `0x0000000000000000000000000000000000000000`,
                     }
@@ -378,7 +388,8 @@ export default function Algorand() {
                 console.log(`This ${addr} has just been opted into the contract: `, res)
             } catch (e) {
                 res = [`err`, e]
-                console.log(`There is an error: `, e)
+                console.log(`There is an error: `, e);
+                alert(e);
             }
         };
         const apis = ctc.a;

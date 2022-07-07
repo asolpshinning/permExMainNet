@@ -52,3 +52,6 @@ export default function handler(req, res) {
   }
   
 }
+
+//a custom hook that returns the square of a number
+

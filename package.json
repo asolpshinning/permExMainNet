@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@reach-sh/stdlib": "^0.1.10-rc.4",
+    "@reach-sh/stdlib": "^0.1.11-rc.2",
     "firebase": "^9.8.4",
     "firebase-admin": "^11.0.0",
     "next": "12.1.6",
