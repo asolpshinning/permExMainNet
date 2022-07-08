@@ -41,7 +41,8 @@ const app = initializeApp(firebaseConfig);
 
 export default function Algorand() {
     let addre;
-    const dbCtcId = '98547130'//'91149871' //Algorand deployed DB test1 //'91227394' DB 2//
+    const dbCtcId = '801762226' //mainnet
+    //const dbCtcId = '98547130'//'91149871' //Algorand deployed DB test1 //'91227394' DB 2//
     const [address, setAddress] = useState("Connect Your Wallet. Click 'connect'");
     const [balance, setBalance] = useState(0);
     const [btDeploy, setBtDeploy] = useState(['DEPLOY', `USDC or Equivalent`, 'USDC/BT']);
@@ -60,7 +61,7 @@ export default function Algorand() {
     const inUseEffect = async () => {
         const reach = loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
         reach.setWalletFallback(reach.walletFallback({
-            providerEnv: 'TestNet', MyAlgoConnect
+            providerEnv: 'MainNet', MyAlgoConnect
         }));
         const acc = await reach.getDefaultAccount();
         addre= acc.getAddress();
@@ -126,7 +127,7 @@ export default function Algorand() {
     //useful function for storing ctcId's to decentralized database
     const dbApi = async (deployedCtc, apiCalled) => {
         let reach = await loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
-        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'TestNet', MyAlgoConnect }));
+        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'MainNet', MyAlgoConnect }));
         const acc = await reach.getDefaultAccount();
         const call = async (f) => {
             let res = undefined;
@@ -162,40 +163,60 @@ export default function Algorand() {
     const showTokenData = async () => {
         const cenCtc = getElement('tokenData')
         const reach = loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
-        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'TestNet', MyAlgoConnect }));
+        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'MainNet', MyAlgoConnect }));
         const acc = await reach.getDefaultAccount();
         const ctc = await acc.contract(backendCtc, cenCtc);
         const tot = await ctc.views.totSTBTD();
         const claimed = await ctc.views.totSTBTDRec(acc.getAddress());
+        //console.log(parseInt(claimed[1][1]._hex))
         const allocated = await ctc.views.claimSTBT(acc.getAddress());
         const vBtBal = await ctc.views.vBtBal();
+        const vOptedIn = await ctc.views.vOptedIn(acc.getAddress());
+        const vHash = await ctc.views.vHash();
         const ctcVersion = await ctc.views.vcVersion();
         const vCcCm = await ctc.views.vCcCm();
-        let totST = parseInt(reach.bigNumberToBigInt(tot[1][0]));
-        let totBT = parseInt(reach.bigNumberToBigInt(tot[1][1]));
-        let cST = parseInt(reach.bigNumberToBigInt(claimed[1][0]));
-        let cBT = parseInt(reach.bigNumberToBigInt(claimed[1][1]));
+        const vCurrSale = await ctc.views.vCurrSale();
+        let totST = parseInt((tot[1][0]._hex));
+        let totBT = parseInt((tot[1][1]._hex));
+        let cBT = claimed[1][1];
+        cBT = parseInt(cBT._hex);
         let allocatedST = parseInt(reach.bigNumberToBigInt(allocated[1][0]));
-        let btBal = parseInt(reach.bigNumberToBigInt(vBtBal[1]));
+        let btBal = parseInt(reach.bigNumberToBigInt(vBtBal[1][0]));
+        let btID = parseInt(reach.bigNumberToBigInt(vBtBal[1][1]));
         let cCcM = vCcCm;
-
         console.log('This is the total share token: ', totST, 'and total backing token: ', totBT);
+        console.log(tot);
         setTokenData(
             <div>
                 FOR INVESTOR: <br />
+                Check if you are opted into the manager contract : {vOptedIn[1] ? 'Yes' : 'No'} <br />
                 Total share tokens in your custom investor's wallet: <b>TBD</b>  <br />
                 Total share tokens allocated to current logged-in investor since launch: == <b>{allocatedST}</b> <br />
-                Total backing tokens claimed by current logged-in investor: == <b>{cBT}</b> <br />
+                Total backing tokens claimed by current logged-in investor: == <b> {cBT}</b> <br /><br/>
+
 
                 FOR SYNDICATOR: <br />
                 Total share tokens allocated since launch == <b>{totST}</b> <br />
-                Total backing tokens sent to contract since launch == <b>{totBT}</b> <br /><br />
-                Total backing tokens currently in the smart contract == <b>{btBal}</b> <br /><br />
-                Current Smart Contract Manager == <b>{cCcM[1][1]}</b> <br /><br />
-                Current Smart Contract Creator == <b>{cCcM[1][0]}</b> <br /><br />
+                Total backing tokens sent to contract since launch == <b>{totBT}</b> <br />
+                Total backing tokens currently in the smart contract == <b>{btBal}</b> <br />
+                Backing token ID == <b>{btID}</b> <br />
+                Current Smart Contract Manager == <b>{cCcM[1][1]}</b> <br />
+                Current Smart Contract Creator == <b>{cCcM[1][0]}</b> <br />
+                Check Document Hash == <b>{vHash[1][0]}</b> <br />
+                Check Document Hash Number == <b>{parseInt(reach.bigNumberToBigInt(vHash[1][1]))}</b> <br />
+                Check Doc Hash Block Number == <b>{parseInt(reach.bigNumberToBigInt(vHash[1][2]))}</b> <br /><br/>
+
+
+                FOR OPEN SALES: <br />
+                View available sales proceeds == <b>{parseInt(reach.bigNumberToBigInt(vCurrSale[1].cumProceeds))}</b> <br />
+                View current sales quantity remaining == <b>{parseInt(reach.bigNumberToBigInt(vCurrSale[1].qty))}</b> <br />
+                View current sales price == <b>{parseInt(reach.bigNumberToBigInt(vCurrSale[1].price))}</b> <br />
+                View current sales amount sold == <b>{parseInt(reach.bigNumberToBigInt(vCurrSale[1].sold))}</b> <br />
+                View current sales status == <b>{vCurrSale[1].status}</b> <br /><br />
 
                 FOR COOPERATIV: <br />
-                Smart Contract Version: <b>{ctcVersion[1]}</b> <br /><br />
+                Smart Contract Version: <b>{ctcVersion[1][0]}</b> <br />
+                Cooperative ID: <b>{ctcVersion[1][1]}</b> <br /><br />
 
             </div>
         )
@@ -204,7 +225,7 @@ export default function Algorand() {
     const deployBT = async () => {
         //connect wallet
         let reach = await loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
-        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'TestNet', MyAlgoConnect }));
+        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'MainNet', MyAlgoConnect }));
         const accCreator = await reach.getDefaultAccount();
         //Launch tokens
         const bT = await reach.launchToken(accCreator, getElement("btCtcName"), getElement("btCtcSymbol"));
@@ -217,7 +238,7 @@ export default function Algorand() {
     const deployST = async () => {
         //connect wallet
         let reach = await loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
-        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'TestNet', MyAlgoConnect }));
+        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'MainNet', MyAlgoConnect }));
         const accCreator = await reach.getDefaultAccount()
         //connect to backendST
         const ctcCreator = accCreator.contract(backendST);
@@ -246,7 +267,7 @@ export default function Algorand() {
     const deployManCtc = async () => {
         //connect wallet
         let stdlib = await loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
-        stdlib.setWalletFallback(stdlib.walletFallback({ providerEnv: 'TestNet', MyAlgoConnect }));
+        stdlib.setWalletFallback(stdlib.walletFallback({ providerEnv: 'MainNet', MyAlgoConnect }));
         const accCreator = await stdlib.getDefaultAccount()
         //connect to backendST
         const ctcCreator = accCreator.contract(backendCtc);
@@ -279,7 +300,7 @@ export default function Algorand() {
         const tokenAllocated = parseInt(getElement('tokenAllocated'));
         const addr = getElement('invWallet')
         let reach = await loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
-        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'TestNet', MyAlgoConnect }));
+        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'MainNet', MyAlgoConnect }));
         const acc = await reach.getDefaultAccount();
         //console.log(stcId.current);
         const centralContract = centralCtc.current;
@@ -308,7 +329,7 @@ export default function Algorand() {
     const deployDB = async() => {
         const reach = loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
         const stdlib = reach;
-        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'TestNet', MyAlgoConnect }));
+        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'MainNet', MyAlgoConnect }));
         const accCreator = await stdlib.getDefaultAccount();
         const ctcCreator = await accCreator.contract(backendDB);
         console.log(`...backendDB now connected`);
@@ -344,7 +365,7 @@ export default function Algorand() {
     // Save to DB
     const saveToDB = async () => {
         const reach = loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
-        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'TestNet', MyAlgoConnect }));
+        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'MainNet', MyAlgoConnect }));
         const acc = await reach.getDefaultAccount();
         const ctc = acc.contract(backendDB, dbCtcId);
 
@@ -365,9 +386,10 @@ export default function Algorand() {
         const apis = ctc.a;
         console.log(apis);
         call(async () => {
-            const id = reach.bigNumberToHex(91151742);
+            //const id = reach.bigNumberToHex(91151742); testnet
+            const id = reach.bigNumberToHex(644628157); //mainnet
             console.log(id);
-            const apiReturn = await apis.btCtcId(id._hex);
+            const apiReturn = await apis.btCtcId('0x266c3ebd'/* id._hex */);
             console.log(`wait for it... db should...`, apiReturn);
             return apiReturn;
         });
@@ -376,7 +398,7 @@ export default function Algorand() {
     //optin to contract
     const optIn = async () => {
         const reach = loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
-        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'TestNet', MyAlgoConnect }));
+        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'MainNet', MyAlgoConnect }));
         const acc = await reach.getDefaultAccount();
         const addr = acc.getAddress();
         const cenContr = getElement('optIn');
@@ -402,7 +424,7 @@ export default function Algorand() {
     //Distribute backing token
     const distrBT = async () => {
         const reach = loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
-        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'TestNet', MyAlgoConnect }));
+        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'MainNet', MyAlgoConnect }));
         const acc = await reach.getDefaultAccount();
         const addr = acc.getAddress();
         const amt = parseInt(getElement('distrAmt'));
@@ -429,7 +451,7 @@ export default function Algorand() {
     //Claim backing token
     const claimBT = async () => {
         const reach = loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
-        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'TestNet', MyAlgoConnect }));
+        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'MainNet', MyAlgoConnect }));
         const acc = await reach.getDefaultAccount();
         const addr = acc.getAddress();
         const cenContr = getElement('cenContr');
@@ -456,7 +478,7 @@ export default function Algorand() {
     const addToWhiteList = async () => {
         const addr = getElement('invAddWL') //get address to be added to whitelist from input box element
         let reach = await loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
-        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'TestNet', MyAlgoConnect }));
+        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'MainNet', MyAlgoConnect }));
         const acc = await reach.getDefaultAccount();
         const centralContract = centralCtc.current; //put central contract ID here
         console.log(`I am currently working on adding an investorto WL connecting to this ctc `, centralContract)
@@ -483,7 +505,7 @@ export default function Algorand() {
     const remFromWhiteList = async () => {
         const addr = getElement('invRemWL') //get address to be removed from whitelist from input box element
         let reach = await loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
-        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'TestNet', MyAlgoConnect }));
+        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'MainNet', MyAlgoConnect }));
         const acc = await reach.getDefaultAccount();
         const centralContract = centralCtc.current; //put central contract ID here
         console.log(`I am currently working on removing investor from WL connectiing to this ctc: `, centralContract)
@@ -506,15 +528,118 @@ export default function Algorand() {
         });
     }
 
+    //API for creating Open Sales
+    const createOS = async () => {
+        let reach = await loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
+        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'MainNet', MyAlgoConnect }));
+        const acc = await reach.getDefaultAccount();
+        const amt = parseInt(getElement('cosamt')) //get amount of tokens to be sold from input box element
+        const price = parseInt(getElement('cosprice')) //get price of tokens from input box element
+        const centralContract = centralCtc.current; //put central contract ID here
+        const ctc = acc.contract(backendCtc, centralContract);
+
+        const call = async (f) => {
+            let res = undefined;
+            try {
+                res = await f();
+                console.log(`SUCCESS -> open sale created: `, res)
+            } catch (e) {
+                res = [`err`, e]
+                console.log(`There is an error: `, e)
+            }
+        };
+        const apis = ctc.a;
+        call(async () => {
+            const apiReturn = await apis.createOS(amt, price);
+            return apiReturn;
+        });
+    }
+
+    //API for ending Open Sales
+    const endOS = async () => {
+        let reach = await loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
+        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'MainNet', MyAlgoConnect }));
+        const acc = await reach.getDefaultAccount();
+        const centralContract = centralCtc.current; //put central contract ID here
+        const ctc = acc.contract(backendCtc, centralContract);
+
+        const call = async (f) => {
+            let res = undefined;
+            try {
+                res = await f();
+                console.log(`SUCCESS -> open sale ended: `, res)
+            } catch (e) {
+                res = [`err`, e]
+                console.log(`There is an error: `, e)
+            }
+        };
+        const apis = ctc.a;
+        call(async () => {
+            const apiReturn = await apis.endOS();
+            return apiReturn;
+        });
+    }
+
+    //API for buying Open Sales
+    const buyOS = async () => {
+        let reach = await loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
+        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'MainNet', MyAlgoConnect }));
+        const acc = await reach.getDefaultAccount();
+        const amt = parseInt(getElement('bosamt')) //get amount of tokens to be sold from input box element
+        const centralContract = getElement('bcenContr'); //put central contract ID here
+        const ctc = acc.contract(backendCtc, centralContract);
+
+        const call = async (f) => {
+            let res = undefined;
+            try {
+                res = await f();
+                console.log(`SUCCESS -> share tokens bought: `, res)
+            } catch (e) {
+                res = [`err`, e]
+                console.log(`There is an error: `, e)
+            }
+        };
+        const apis = ctc.a;
+        call(async () => {
+            const apiReturn = await apis.buyOS(amt);
+            return apiReturn;
+        });
+    }
+
+    //API for ending Open Sales
+    const claimOSpr = async () => {
+        let reach = await loadStdlib.loadStdlib({ REACH_CONNECTOR_MODE: "ALGO" });
+        reach.setWalletFallback(reach.walletFallback({ providerEnv: 'MainNet', MyAlgoConnect }));
+        const acc = await reach.getDefaultAccount();
+        const centralContract = centralCtc.current; //put central contract ID here
+        const ctc = acc.contract(backendCtc, centralContract);
+
+        const call = async (f) => {
+            let res = undefined;
+            try {
+                res = await f();
+                console.log(`SUCCESS -> open sale proceeds claimed: `, res)
+            } catch (e) {
+                res = [`err`, e]
+                console.log(`There is an error: `, e)
+            }
+        };
+        const apis = ctc.a;
+        call(async () => {
+            const apiReturn = await apis.claimOSpr();
+            return apiReturn;
+        });
+    }
+
 
     //
     return (
-        <div>
+        <div className={styles.container}>
             <h3>Connected Address: </h3> {address}
             <h3>Balance: </h3> {balance} ALGO
             <br />
             <br />
-            <button onClick={deployDB}>Deploy DB</button>
+            <button className={styles.button} onClick={deployDB}>Deploy DB</button>
             <br />
             <button onClick={saveToDB}>Save BT to DB</button>
             <br />
@@ -579,7 +704,7 @@ export default function Algorand() {
             <br />
 
             <h3>Show/Reset Distribution/ Allocation Data</h3>
-            Central Contract ID == <input className='tokenData'></input> (Delete all the extra 0's at the end)<br />
+            Central Contract ID == <input className='tokenData'></input><br /><br/>
             {tokenData}
             <button onClick={showTokenData}>Show/Reset</button>
 
@@ -603,6 +728,37 @@ export default function Algorand() {
             <button onClick={claimBT}>Claim</button>
             <br />
             <br />
+
+            <h2>Create Open Sale</h2>
+            Share Token Amount ==
+            <input className='cosamt'></input> <br />
+            Share Token Price ==
+            <input className='cosprice'></input> <br />
+            <button onClick={createOS}>Create</button>
+            <br />
+            <br />
+
+            <h2>Buy Open Sale</h2>
+            Central Contract ID ==
+            <input className='bcenContr'></input> <br />
+            Share Token Amount ==
+            <input className='bosamt'></input> <br />
+            <button onClick={buyOS}>Buy</button>
+            <br />
+            <br />
+
+            <h2>End Open Sale</h2>
+            <button onClick={endOS}>End</button>
+            <br />
+            <br />
+
+            <h2>Claim Open Sale Proceeds</h2>
+            <button onClick={claimOSpr}>Claim</button>
+            <br />
+            <br />
+
+
+
             Test this and give feedback
 
             {/* <h2>Lock / Unlock Share Token Sales (During vesting, and during distributions, lock sales) </h2> 
